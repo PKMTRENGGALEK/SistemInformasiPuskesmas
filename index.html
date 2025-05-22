@@ -358,11 +358,13 @@ function deleteLink(key) {
     cancelButtonText: 'Batal',
   }).then(result => {
     if (result.isConfirmed) {
-     database.ref(`links/${key}`).remove().then(() => {
+      database.ref(`links/${key}`).remove().then(() => {
         Swal.fire('Dihapus!', 'Link telah dihapus.', 'success');
-        fetchLinks();
-        renderAdminTable(); // ❌ Ini kepanggil terlalu cepat
+        fetchLinks().then(() => {
+          renderAdminTable(); // ✅ Baru render setelah data ter-update
+        });
       });
+
     }
   });
 }
@@ -398,6 +400,52 @@ function editLink(key) {
     }
   });
 }
+function renderAdminTable() {
+  adminTableBody.innerHTML = '';
+  linksData.forEach(link => {
+    const row = document.createElement('tr');
+    row.innerHTML = `
+      <td class="py-2 px-3">${link.name}</td>
+      <td class="py-2 px-3 text-blue-700 underline truncate max-w-[120px]">
+        <a href="${link.url}" target="_blank">${link.url}</a>
+      </td>
+      <td class="py-2 px-3 space-x-2">
+        <button class="text-red-500 hover:text-red-700" onclick="deleteLink('${link.key}')">
+          <i class="fas fa-trash"></i>
+        </button>
+      </td>
+    `;
+    adminTableBody.appendChild(row);
+  });
+}
+
+function deleteLink(key) {
+  Swal.fire({
+    title: 'Yakin ingin menghapus?',
+    text: 'Tindakan ini tidak bisa dibatalkan!',
+    icon: 'warning',
+    showCancelButton: true,
+    confirmButtonText: 'Ya, hapus!',
+    cancelButtonText: 'Batal',
+  }).then((result) => {
+    if (result.isConfirmed) {
+      database.ref(`links/${key}`).remove()
+        .then(() => {
+          Swal.fire('Terhapus!', 'Data berhasil dihapus.', 'success');
+          fetchLinks(); // Perbarui tampilan
+        })
+        .catch(() => {
+          Swal.fire('Gagal!', 'Gagal menghapus data.', 'error');
+        });
+    }
+  });
+}
+
+// Tutup modal admin saat klik tombol tutup
+closeAdminPanel.addEventListener('click', () => {
+  adminPanelModal.classList.add('hidden');
+});
+
 
   </script>
 </body>
