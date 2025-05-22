@@ -68,11 +68,23 @@
 
 <body class="px-4 py-10 relative">
 
-  <div class="absolute top-4 right-4">
+ <!--  <div class="absolute top-4 right-4">
     <button id="toggleForm" class="text-white hover:text-yellow-300 text-2xl" title="Tambah Link">
       <i class="fas fa-gear"></i>
     </button>
-  </div>
+  </div> -->
+  <div class="absolute top-4 right-4 flex items-center gap-3">
+  <input
+    type="text"
+    id="searchInput"
+    placeholder="Cari berkas..."
+    class="px-3 py-1 rounded-lg text-sm shadow-md focus:outline-none focus:ring-2 focus:ring-yellow-300"
+  />
+  <button id="toggleForm" class="text-white hover:text-yellow-300 text-2xl" title="Tambah Link">
+    <i class="fas fa-gear"></i>
+  </button>
+</div>
+
 
   <div class="w-full max-w-5xl mx-auto">
     <div class="text-center mb-10" data-aos="fade-down">
@@ -180,6 +192,15 @@
         renderLinks(linksData);
       });
     }
+    const searchInput = document.getElementById('searchInput');
+
+      searchInput.addEventListener('input', () => {
+        const keyword = searchInput.value.toLowerCase();
+        const filteredLinks = linksData.filter(link =>
+          link.name.toLowerCase().includes(keyword)
+        );
+        renderLinks(filteredLinks);
+      });
 
     function saveOrderToFirebase(evt) {
       // Ambil urutan terbaru dari DOM
