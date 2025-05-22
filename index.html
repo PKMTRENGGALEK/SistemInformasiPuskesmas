@@ -358,13 +358,11 @@ function deleteLink(key) {
     cancelButtonText: 'Batal',
   }).then(result => {
     if (result.isConfirmed) {
-      database.ref(`links/${key}`).remove().then(() => {
+     database.ref(`links/${key}`).remove().then(() => {
         Swal.fire('Dihapus!', 'Link telah dihapus.', 'success');
-        fetchLinks().then(() => {
-          renderAdminTable(); // ✅ Baru render setelah data ter-update
-        });
+        fetchLinks();
+        renderAdminTable(); // ❌ Ini kepanggil terlalu cepat
       });
-
     }
   });
 }
