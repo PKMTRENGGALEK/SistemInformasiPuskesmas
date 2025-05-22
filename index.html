@@ -62,14 +62,42 @@
       left: 0;
       z-index: 10;
     }
+    /* Jaga warna tombol confirm Swal agar tidak berubah saat ditekan */
+    .swal2-confirm {
+      background-color: #e3342f !important; /* Merah */
+      color: white !important;
+      border: none !important;
+      box-shadow: none !important;
+    }
+
+    .swal2-confirm:active {
+      background-color: #cc2a26 !important; /* Merah lebih gelap saat ditekan */
+      color: white !important;
+      border: none !important;
+      box-shadow: none !important;
+    }
+
+    /* Juga tombol cancel agar konsisten */
+    .swal2-cancel {
+      background-color: #6c757d !important; /* Abu */
+      color: white !important;
+      border: none !important;
+      box-shadow: none !important;
+    }
+
+    .swal2-cancel:active {
+      background-color: #5a6268 !important; /* Abu gelap saat ditekan */
+      color: white !important;
+      border: none !important;
+      box-shadow: none !important;
+    }
+
 
   </style>
 </head>
 
 <body class="px-4 pt-24 pb-10 relative">
 
-
- 
 
 <div class="absolute top-4 left-1/2 transform -translate-x-1/2 w-full max-w-sm flex items-center gap-2 px-4 z-50">
   <div class="relative flex-1">
@@ -87,6 +115,7 @@
     <i class="fas fa-gear"></i>
   </button>
 </div>
+
 
 
 
@@ -113,6 +142,26 @@
         </div>
       </form>
     </div>
+    <div id="adminPanelModal" class="fixed inset-0 bg-black bg-opacity-40 backdrop-blur-sm flex items-center justify-center hidden z-50">
+      <div class="bg-white/90 backdrop-blur-lg w-full max-w-3xl rounded-xl p-6 shadow-2xl overflow-y-auto max-h-[90vh]">
+        <div class="flex justify-between items-center mb-4">
+          <h2 class="text-xl font-bold text-blue-800">Panel Admin</h2>
+          <button id="closeAdminPanel" class="text-red-500 hover:text-red-700 text-lg">&times;</button>
+        </div>
+        <table class="w-full text-sm text-left border border-gray-300 rounded shadow-md overflow-hidden">
+          <thead class="bg-blue-100">
+            <tr>
+              <th class="py-2 px-3">Nama</th>
+              <th class="py-2 px-3">URL</th>
+              <th class="py-2 px-3">Aksi</th>
+            </tr>
+          </thead>
+          <tbody id="adminTableBody" class="bg-white divide-y divide-gray-200">
+            <!-- Isi link akan muncul di sini -->
+          </tbody>
+        </table>
+      </div>
+    </div>
 
     <div id="linkContainer" class="grid sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6 justify-items-center" data-aos="fade-up">
       <!-- Link akan ditambahkan di sini -->
@@ -120,8 +169,9 @@
   </div>
 
   <footer>
-    made by @yoga || 2025
+    made by <span id="adminPanelBtn" class="underline cursor-pointer hover:text-yellow-300">@yoga</span> || 2025
   </footer>
+
 
   <script src="https://cdn.jsdelivr.net/npm/aos@2.3.4/dist/aos.js"></script>
   <script>
@@ -269,6 +319,88 @@
     });
 
     fetchLinks();
+    const adminPanelBtn = document.getElementById('adminPanelBtn');
+const adminPanelModal = document.getElementById('adminPanelModal');
+const closeAdminPanel = document.getElementById('closeAdminPanel');
+const adminTableBody = document.getElementById('adminTableBody');
+
+adminPanelBtn.addEventListener('click', () => {
+  renderAdminTable();
+  adminPanelModal.classList.remove('hidden');
+});
+
+closeAdminPanel.addEventListener('click', () => {
+  adminPanelModal.classList.add('hidden');
+});
+
+function renderAdminTable() {
+  adminTableBody.innerHTML = '';
+  linksData.forEach(link => {
+    const row = document.createElement('tr');
+    row.innerHTML = `
+      <td class="px-3 py-2">${link.name}</td>
+      <td class="px-3 py-2"><a href="${link.url}" class="text-blue-600 underline" target="_blank">${link.url}</a></td>
+      <td class="px-3 py-2 space-x-2">
+        <button class="text-yellow-500 hover:text-yellow-700 text-sm" onclick="editLink('${link.key}')">Edit</button>
+        <button class="text-red-500 hover:text-red-700 text-sm" onclick="deleteLink('${link.key}')">Hapus</button>
+      </td>
+    `;
+    adminTableBody.appendChild(row);
+  });
+}
+
+function deleteLink(key) {
+  Swal.fire({
+    title: 'Hapus link ini?',
+    icon: 'warning',
+    showCancelButton: true,
+    confirmButtonText: 'Ya, hapus',
+    cancelButtonText: 'Batal',
+  }).then(result => {
+    if (result.isConfirmed) {
+      database.ref(`links/${key}`).remove().then(() => {
+        Swal.fire('Dihapus!', 'Link telah dihapus.', 'success');
+        fetchLinks().then(() => {
+          renderAdminTable(); // ✅ Baru render setelah data ter-update
+        });
+      });
+
+    }
+  });
+}
+
+function editLink(key) {
+  const link = linksData.find(l => l.key === key);
+  if (!link) return;
+
+  Swal.fire({
+    title: 'Edit Link',
+    html: `
+      <input id="editName" class="swal2-input" placeholder="Nama Berkas" value="${link.name}">
+      <input id="editURL" class="swal2-input" placeholder="URL" value="${link.url}">
+    `,
+    confirmButtonText: 'Simpan',
+    showCancelButton: true,
+    preConfirm: () => {
+      const name = document.getElementById('editName').value.trim();
+      const url = document.getElementById('editURL').value.trim();
+      if (!name || !url) {
+        Swal.showValidationMessage('Semua kolom harus diisi');
+        return false;
+      }
+      return { name, url };
+    }
+  }).then(result => {
+    if (result.isConfirmed) {
+      database.ref(`links/${key}`).update(result.value).then(() => {
+        Swal.fire('Tersimpan!', 'Link berhasil diperbarui.', 'success');
+        fetchLinks();
+        renderAdminTable(); // perbarui tabel admin
+      });
+    }
+  });
+}
+
   </script>
 </body>
 
